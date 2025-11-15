@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Data Collection</title>
+  <style>
+    #map { width: 100%; height: 350px; margin: 10px 0; }
+    body { font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <h1>Welcome!</h1>
+  <p>Rain Water Management App.</p>
+
+  <form id="myForm">
+    <label>Your name: <input type="text" name="username"></label><br>
+    <label>Email: <input type="email" name="email"></label><br>
+    <label>House type:
+      <select name="houseType">
+        <option value="detached">Detached</option>
+        <option value="semi-detached">Semi-detached</option>
+        <option value="apartment">Apartment</option>
+      </select>
+    </label><br>
+    <label>Has a garden:
+      <input type="radio" name="garden" value="yes"> Yes
+      <input type="radio" name="garden" value="no"> No
+    </label><br>
+    <label>Garden area (m²):
+      <input type="number" name="gardenArea" min="0">
+    </label><br>
+    <input type="hidden" name="lat" id="lat">
+    <input type="hidden" name="lng" id="lng">
+    <div id="map"></div>
+    <input type="submit" value="Submit">
+  </form>
+
+  <div id="solution" style="margin-top:15px;font-size:1.1em;"></div>
+
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <!-- Replace YOUR_API_KEY with your real Google Maps API key -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZYEbAcNzah4uJIzYvquSGWWklBqVYZjY&callback=initMap" async defer></script>
+  <script>
+    let marker, map, geojsonData;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: 50.92, lng: 6.7},
+        zoom: 14
+      });
+      fetch('https://raw.githubusercontent.com/dewminanayakkara1/Trial1/refs/heads/main/imp%20new.json')
+        .then(res => res.json())
+        .then(data => {
+          geojsonData = data;
+        });
+
+      map.addListener('click', function(event) {
+        var lat = event.latLng.lat();
+        var lng = event.latLng.lng();
+        document.getElementById('lat').value = lat;
+        document.getElementById('lng').value = lng;
+        if (marker) marker.setMap(null);
+        marker = new google.maps.Marker({ position: {lat, lng}, map: map });
+      });
+    }
+
+    document.getElementById('myForm').onsubmit = function(e) {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const lat = formData.get('lat');
+      const lng = formData.get('lng');
+      if (!lat || !lng) {
+        document.getElementById('solution').innerText = 'Please click your location on the map!';
+        return;
+      }
+      if (!geojsonData) {
+        document.getElementById('solution').innerText = 'Map data not loaded yet.';
+        return;
+      }
+      let pt = turf.point([parseFloat(lng), parseFloat(lat)]);
+      let match = geojsonData.features.find(f => turf.booleanPointInPolygon(pt, f));
+      let impMessage = '';
+      if (match) {
+        let imp = match.properties['%'];
+        let rec = imp <= 30 ? 'Infiltration (rain gardens, soakaways)' :
+                  imp <= 70 ? 'Mixed: tanks + infiltration/permeable paving' :
+                  'Engineered: tanks, green roofs, permeable paving';
+        impMessage = `Imperviousness: <b>${imp}%</b><br>Recommended Solution: <b>${rec}</b>`;
+      } else {
+        impMessage = 'No imperviousness data here.';
+      }
+      document.getElementById('solution').innerHTML = impMessage;
+    };
+  </script>
+</body>
+</html>
