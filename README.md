@@ -1,4 +1,4 @@
-# Kerpen Rainwater Management Web App
+# Rainwater Management Web App
 
 This repository contains the source files for the Kerpen Rainwater Management Web App, a tool designed to help homeowners explore sustainable rainwater and stormwater management measures tailored to Kerpen's local climate and urban conditions.
 
