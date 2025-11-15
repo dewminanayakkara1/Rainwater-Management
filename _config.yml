@@ -1,0 +1,11 @@
+theme: minima
+- title: "Home"
+  url: /
+- title: "About"
+  url: /about.html
+- title: "Solutions"
+  url: /solutions.html
+- title: "Imperviousness Map"
+  url: /imperviousness.html
+- title: "Rainwater App"
+  url: /form.html
