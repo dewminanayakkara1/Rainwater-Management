@@ -1,11 +1,13 @@
+title: "Kerpen Rainwater Management Web App"
+description: "A tool to explore sustainable rainwater and stormwater management solutions for Kerpen."
 theme: minima
-- title: "Home"
-  url: /
-- title: "About"
-  url: /about.html
-- title: "Solutions"
-  url: /solutions.html
-- title: "Imperviousness Map"
-  url: /imperviousness.html
-- title: "Rainwater App"
-  url: /form.html
+
+# Navigation links for the header
+header_pages:
+  - index.md
+  - about.md
+  - solutions.md
+  - imperviousness.md
+  - form.html
+
+markdown: kramdown
