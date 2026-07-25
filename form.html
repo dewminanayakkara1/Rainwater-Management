@@ -18,17 +18,54 @@
 </head>
 <body>
   <h1>Rainwater App</h1>
-  <p>Click on your house on the map. The recommended Nature-Based Solution shown is the one already calculated by our GIS analysis for that exact parcel.</p>
+  <p>Click on your house on the map. The recommended Nature-Based Solution shown is calculated live from our separate GIS suitability layers for that exact parcel.</p>
 
   <div id="map"></div>
-  <div id="solution">Click a house on the map to see its recommended solution.</div>
+  <div id="solution">Loading GIS data, please wait...</div>
 
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-  
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZYEbAcNzah4uJIzYvquSGWWklBqVYZjY&callback=initMap" async defer></script>
   <script>
-    var map, geojsonData;
-    var marker = null;
+    var map;
+    var marker = null; 
+    var plotsData = null;
+
+
+    var grAreaByPlot = {};
+    var ppAreaByPlot = {};
+    var bsAreaByPlot = {};
+    var rgAreaByPlot = {};
+    var cisSuitablePlots = {};
+
+    var LABELS = {
+      GR: 'Green Roof',
+      PP: 'Permeable Pavement',
+      BS: 'Rainwater Storage Tank',
+      RG: 'Rain Garden',
+      CIS: 'Infiltration & Reuse System (combined)'
+    };
+
+    var BASE = 'https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/';
+
+    function fetchJSON(filename) {
+      return fetch(BASE + encodeURIComponent(filename)).then(function (res) { return res.json(); });
+    }
+
+    // Adds up a numeric field across all features sharing the same parcel ID.
+    // Needed because some suitability layers split one plot into several small polygon fragments.
+    function sumByPlot(features, field, filterFn) {
+      var out = {};
+      features.forEach(function (f) {
+        var p = f.properties;
+        if (filterFn && !filterFn(p)) return;
+        var id = p['flstkennz_'];
+        var val = parseFloat(p[field]);
+        if (!id || isNaN(val)) return;
+        out[id] = (out[id] || 0) + val;
+      });
+      return out;
+    }
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
@@ -36,49 +73,101 @@
         zoom: 17
       });
 
-      fetch('https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/imp%20new.json')
-        .then(function (res) { return res.json(); })
-        .then(function (data) { geojsonData = data; });
+      Promise.all([
+        fetchJSON('Horrem plots.geojson'),
+        fetchJSON('GR suitability.geojson'),
+        fetchJSON('PP suitability.geojson'),
+        fetchJSON('BS suitability.geojson'),
+        fetchJSON('RG suitability.geojson'),
+        fetchJSON('CIS suitability.geojson')
+      ]).then(function (results) {
+        var plots = results[0];
+        var gr = results[1].features;
+        var pp = results[2].features;
+        var bs = results[3].features;
+        var rg = results[4].features;
+        var cis = results[5].features;
+
+        plotsData = plots;
+
+        grAreaByPlot = sumByPlot(gr, 'modarea', function (p) { return p['feasible'] === 1; });
+        ppAreaByPlot = sumByPlot(pp, 'final area');
+        bsAreaByPlot = sumByPlot(bs, 'final area');
+        rgAreaByPlot = sumByPlot(rg, 'area final');
+
+        cisSuitablePlots = {};
+        cis.forEach(function (f) {
+          var id = f.properties['flstkennz_'];
+          if (id) cisSuitablePlots[id] = true;
+        });
+
+        document.getElementById('solution').innerText = 'Click a house on the map to see its recommended solution.';
+      }).catch(function (err) {
+        document.getElementById('solution').innerText = 'Could not load GIS data: ' + err;
+      });
 
       map.addListener('click', function (event) {
-        var lat = event.latLng.lat();
-        var lng = event.latLng.lng();
-        showSolutionAt(lat, lng);
+        showSolutionAt(event.latLng.lat(), event.latLng.lng());
       });
     }
 
-    function labelFor(sol) {
-      if (sol && sol.indexOf('Infilt') === 0) return 'Infiltration (rain garden, soakaway)';
-      if (sol === 'Mixed') return 'Mixed: storage tank + infiltration / permeable paving';
-      if (sol === 'Engineered') return 'Engineered: storage tank, green roof, permeable paving';
-      return sol || null;
-    }
-
     function showSolutionAt(lat, lng) {
-      if (!geojsonData) {
+      if (!plotsData) {
         document.getElementById('solution').innerText = 'Map data still loading, please click again in a moment.';
         return;
       }
 
       var pt = turf.point([lng, lat]);
-      var match = geojsonData.features.find(function (f) {
-        return turf.booleanPointInPolygon(pt, f);
-      });
+      var match = plotsData.features.find(function (f) { return turf.booleanPointInPolygon(pt, f); });
 
       if (marker) marker.setMap(null);
       marker = new google.maps.Marker({ position: { lat: lat, lng: lng }, map: map });
 
       if (!match) {
-        document.getElementById('solution').innerText = 'No house data at this location — please click directly on a colored house/parcel.';
+        document.getElementById('solution').innerText = 'No house data at this location — please click directly on a plot.';
         return;
       }
 
-      var perc = match.properties['%'];
-      var sol = match.properties['Solution'];
+      var id = match.properties['flstkennz_'];
+      var address = match.properties['lagebeztxt'];
+
+      var areas = {
+        GR: grAreaByPlot[id] || 0,
+        PP: ppAreaByPlot[id] || 0,
+        BS: bsAreaByPlot[id] || 0,
+        RG: rgAreaByPlot[id] || 0
+      };
+      var cisSuitable = !!cisSuitablePlots[id];
+
+      var bestCode = null, bestArea = 0;
+      Object.keys(areas).forEach(function (code) {
+        if (areas[code] > bestArea) { bestArea = areas[code]; bestCode = code; }
+      });
+
+      var recommended = null;
+      if (bestCode) {
+        recommended = LABELS[bestCode];
+      } else if (cisSuitable) {
+        recommended = LABELS.CIS;
+      }
+
+      var others = [];
+      Object.keys(areas).forEach(function (code) {
+        if (areas[code] > 0 && code !== bestCode) others.push(LABELS[code]);
+      });
+      if (cisSuitable && recommended !== LABELS.CIS) others.push(LABELS.CIS);
+
+      var header = address ? '<b>' + address + '</b><br>' : '';
+
+      if (!recommended) {
+        document.getElementById('solution').innerHTML = header + 'No suitable Nature-Based Solution identified yet for this plot.';
+        return;
+      }
 
       document.getElementById('solution').innerHTML =
-        'Imperviousness: <b>' + perc + '%</b><br>' +
-        'Recommended Nature-Based Solution: <b>' + (labelFor(sol) || 'No data') + '</b>';
+        header +
+        'Recommended Nature-Based Solution: <b>' + recommended + '</b>' +
+        (others.length ? '<br>Also suitable: ' + others.join(', ') : '');
     }
   </script>
 
