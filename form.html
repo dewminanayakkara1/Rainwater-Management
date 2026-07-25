@@ -24,10 +24,11 @@
   <div id="solution">Click a house on the map to see its recommended solution.</div>
 
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
   <script>
     var map, geojsonData;
-    var houseOutline = null;
+    var marker = null;
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
@@ -64,10 +65,8 @@
         return turf.booleanPointInPolygon(pt, f);
       });
 
-      if (houseOutline) {
-        houseOutline.setMap(null);
-        houseOutline = null;
-      }
+      if (marker) marker.setMap(null);
+      marker = new google.maps.Marker({ position: { lat: lat, lng: lng }, map: map });
 
       if (!match) {
         document.getElementById('solution').innerText = 'No house data at this location — please click directly on a colored house/parcel.';
@@ -80,19 +79,12 @@
       document.getElementById('solution').innerHTML =
         'Imperviousness: <b>' + perc + '%</b><br>' +
         'Recommended Nature-Based Solution: <b>' + (labelFor(sol) || 'No data') + '</b>';
-
-      var coords = match.geometry.coordinates[0].map(function (c) {
-        return { lat: c[1], lng: c[0] };
-      });
-      houseOutline = new google.maps.Polygon({
-        paths: coords,
-        strokeColor: '#000000',
-        strokeWeight: 3,
-        fillOpacity: 0,
-        map: map
-      });
     }
   </script>
+
+</body>
+</html>
+
 
 </body>
 </html>
