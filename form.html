@@ -14,29 +14,31 @@
     body { font-family: Arial, sans-serif; }
     #map { width: 100%; height: 500px; margin: 10px 0; }
     #solution { margin: 10px 0; font-size: 1.1em; padding: 10px; background: #f4f4f4; border-radius: 6px; }
+    #legend { font-size: 0.9em; margin: 6px 0 10px 0; }
+    #legend span { display: inline-block; width: 12px; height: 12px; margin-right: 4px; border-radius: 2px; vertical-align: middle; }
   </style>
 </head>
 <body>
   <h1>Rainwater App</h1>
-  <p>Click on your house on the map. The recommended Nature-Based Solution shown is calculated live from our separate GIS suitability layers for that exact parcel.</p>
+  <p>Click on a highlighted plot to see its recommended Nature-Based Solution, calculated from our GIS suitability layers.</p>
+
+  <div id="legend">
+    <span style="background:#2ecc71"></span>Green Roof &nbsp;
+    <span style="background:#f39c12"></span>Permeable Pavement &nbsp;
+    <span style="background:#3498db"></span>Storage Tank &nbsp;
+    <span style="background:#9b59b6"></span>Rain Garden &nbsp;
+    <span style="background:#e74c3c"></span>Infiltration &amp; Reuse &nbsp;
+    <span style="background:#cccccc"></span>No data
+  </div>
 
   <div id="map"></div>
   <div id="solution">Loading GIS data, please wait...</div>
 
-  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
+  <!-- Replace YOUR_API_KEY with your real Google Maps API key -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZYEbAcNzah4uJIzYvquSGWWklBqVYZjY&callback=initMap" async defer></script>
   <script>
     var map;
-    var marker = null; 
-    var plotsData = null;
-
-
-    var grAreaByPlot = {};
-    var ppAreaByPlot = {};
-    var bsAreaByPlot = {};
-    var rgAreaByPlot = {};
-    var cisSuitablePlots = {};
+    var marker = null;
 
     var LABELS = {
       GR: 'Green Roof',
@@ -45,15 +47,18 @@
       RG: 'Rain Garden',
       CIS: 'Infiltration & Reuse System (combined)'
     };
+    var COLORS = { GR: '#2ecc71', PP: '#f39c12', BS: '#3498db', RG: '#9b59b6', CIS: '#e74c3c', NONE: '#cccccc' };
 
+    // Base URL where all the GeoJSON files live in your GitHub repo (root folder)
     var BASE = 'https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/';
 
     function fetchJSON(filename) {
-      return fetch(BASE + encodeURIComponent(filename)).then(function (res) { return res.json(); });
+      return fetch(BASE + encodeURIComponent(filename)).then(function (res) {
+        if (!res.ok) throw new Error(filename + ' returned ' + res.status);
+        return res.json();
+      });
     }
 
-    // Adds up a numeric field across all features sharing the same parcel ID.
-    // Needed because some suitability layers split one plot into several small polygon fragments.
     function sumByPlot(features, field, filterFn) {
       var out = {};
       features.forEach(function (f) {
@@ -69,8 +74,8 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 50.92, lng: 6.7 },
-        zoom: 17
+        center: { lat: 50.912, lng: 6.7094 }, // centered on the Horrem plot data
+        zoom: 16
       });
 
       Promise.all([
@@ -88,75 +93,70 @@
         var rg = results[4].features;
         var cis = results[5].features;
 
-        plotsData = plots;
-
-        grAreaByPlot = sumByPlot(gr, 'modarea', function (p) { return p['feasible'] === 1; });
-        ppAreaByPlot = sumByPlot(pp, 'final area');
-        bsAreaByPlot = sumByPlot(bs, 'final area');
-        rgAreaByPlot = sumByPlot(rg, 'area final');
-
-        cisSuitablePlots = {};
+        var grAreaByPlot = sumByPlot(gr, 'modarea', function (p) { return p['feasible'] === 1; });
+        var ppAreaByPlot = sumByPlot(pp, 'final area');
+        var bsAreaByPlot = sumByPlot(bs, 'final area');
+        var rgAreaByPlot = sumByPlot(rg, 'area final');
+        var cisSuitablePlots = {};
         cis.forEach(function (f) {
           var id = f.properties['flstkennz_'];
           if (id) cisSuitablePlots[id] = true;
         });
 
-        document.getElementById('solution').innerText = 'Click a house on the map to see its recommended solution.';
-      }).catch(function (err) {
-        document.getElementById('solution').innerText = 'Could not load GIS data: ' + err;
-      });
+        // Work out the recommendation for every plot up front, once, and store it on the feature
+        plots.features.forEach(function (f) {
+          var id = f.properties['flstkennz_'];
+          var areas = {
+            GR: grAreaByPlot[id] || 0,
+            PP: ppAreaByPlot[id] || 0,
+            BS: bsAreaByPlot[id] || 0,
+            RG: rgAreaByPlot[id] || 0
+          };
+          var cisSuitable = !!cisSuitablePlots[id];
 
-      map.addListener('click', function (event) {
-        showSolutionAt(event.latLng.lat(), event.latLng.lng());
+          var bestCode = null, bestArea = 0;
+          Object.keys(areas).forEach(function (code) {
+            if (areas[code] > bestArea) { bestArea = areas[code]; bestCode = code; }
+          });
+
+          var recommendedCode = bestCode || (cisSuitable ? 'CIS' : null);
+
+          var others = [];
+          Object.keys(areas).forEach(function (code) {
+            if (areas[code] > 0 && code !== bestCode) others.push(LABELS[code]);
+          });
+          if (cisSuitable && recommendedCode !== 'CIS') others.push(LABELS.CIS);
+
+          f.properties.recommended_code = recommendedCode;
+          f.properties.recommended_label = recommendedCode ? LABELS[recommendedCode] : null;
+          f.properties.other_labels = others;
+        });
+
+        // Draw every plot on the map, colored by its recommended solution
+        map.data.addGeoJson(plots);
+        map.data.setStyle(function (feature) {
+          var code = feature.getProperty('recommended_code');
+          var color = COLORS[code] || COLORS.NONE;
+          return { fillColor: color, fillOpacity: 0.45, strokeColor: color, strokeWeight: 1 };
+        });
+
+        map.data.addListener('click', function (event) {
+          showPlot(event.feature, event.latLng);
+        });
+
+        document.getElementById('solution').innerText = 'Click a highlighted plot to see its recommended solution.';
+      }).catch(function (err) {
+        document.getElementById('solution').innerText = 'Could not load GIS data: ' + err.message;
       });
     }
 
-    function showSolutionAt(lat, lng) {
-      if (!plotsData) {
-        document.getElementById('solution').innerText = 'Map data still loading, please click again in a moment.';
-        return;
-      }
-
-      var pt = turf.point([lng, lat]);
-      var match = plotsData.features.find(function (f) { return turf.booleanPointInPolygon(pt, f); });
-
+    function showPlot(feature, latLng) {
       if (marker) marker.setMap(null);
-      marker = new google.maps.Marker({ position: { lat: lat, lng: lng }, map: map });
+      marker = new google.maps.Marker({ position: latLng, map: map });
 
-      if (!match) {
-        document.getElementById('solution').innerText = 'No house data at this location — please click directly on a plot.';
-        return;
-      }
-
-      var id = match.properties['flstkennz_'];
-      var address = match.properties['lagebeztxt'];
-
-      var areas = {
-        GR: grAreaByPlot[id] || 0,
-        PP: ppAreaByPlot[id] || 0,
-        BS: bsAreaByPlot[id] || 0,
-        RG: rgAreaByPlot[id] || 0
-      };
-      var cisSuitable = !!cisSuitablePlots[id];
-
-      var bestCode = null, bestArea = 0;
-      Object.keys(areas).forEach(function (code) {
-        if (areas[code] > bestArea) { bestArea = areas[code]; bestCode = code; }
-      });
-
-      var recommended = null;
-      if (bestCode) {
-        recommended = LABELS[bestCode];
-      } else if (cisSuitable) {
-        recommended = LABELS.CIS;
-      }
-
-      var others = [];
-      Object.keys(areas).forEach(function (code) {
-        if (areas[code] > 0 && code !== bestCode) others.push(LABELS[code]);
-      });
-      if (cisSuitable && recommended !== LABELS.CIS) others.push(LABELS.CIS);
-
+      var address = feature.getProperty('lagebeztxt');
+      var recommended = feature.getProperty('recommended_label');
+      var others = feature.getProperty('other_labels') || [];
       var header = address ? '<b>' + address + '</b><br>' : '';
 
       if (!recommended) {
