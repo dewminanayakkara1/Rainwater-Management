@@ -18,8 +18,8 @@
     #legend span { display: inline-block; width: 12px; height: 12px; margin-right: 4px; border-radius: 2px; vertical-align: middle; }
     #priorities { display: none; margin: 10px 0; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; }
     #priorities h3 { margin: 0 0 8px 0; font-size: 1em; }
-    #priorities label { display: block; margin: 8px 0 2px 0; font-size: 0.9em; }
-    #priorities input[type=range] { width: 100%; }
+    #priorities button { padding: 8px 14px; margin: 0 6px 6px 0; border: 1px solid #999; border-radius: 6px; background: #f4f4f4; cursor: pointer; font-size: 0.9em; }
+    #priorities button.active { background: #333; color: #fff; border-color: #333; }
     #ranking { margin-top: 10px; }
     #ranking div { padding: 4px 0; border-top: 1px solid #eee; }
     #ranking div:first-child { border-top: none; font-weight: bold; }
@@ -42,17 +42,14 @@
   <div id="solution">Loading GIS data, please wait...</div>
 
   <div id="priorities">
-    <h3>More than one solution fits this plot — set your priorities</h3>
-    <label>Low cost matters: <span id="costVal">3</span>/5</label>
-    <input type="range" id="costSlider" min="1" max="5" value="3">
-    <label>Water retention matters: <span id="retVal">3</span>/5</label>
-    <input type="range" id="retSlider" min="1" max="5" value="3">
-    <label>Low maintenance matters: <span id="maintVal">3</span>/5</label>
-    <input type="range" id="maintSlider" min="1" max="5" value="3">
+    <h3>More than one solution fits this plot — what matters most to you?</h3>
+    <button type="button" data-criterion="cost">Cost</button>
+    <button type="button" data-criterion="retention">Water Retention</button>
+    <button type="button" data-criterion="maintenance">Maintenance</button>
     <div id="ranking"></div>
   </div>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZYEbAcNzah4uJIzYvquSGWWklBqVYZjY&callback=initMap" async defer></script>
   <script>
     var map;
     var marker = null;
@@ -136,7 +133,7 @@
             RG: rgAreaByPlot[id] || 0
           };
           var cisSuitable = !!cisSuitablePlots[id];
-          
+
           var candidates = Object.keys(areas).filter(function (code) { return areas[code] > 0; });
           if (cisSuitable) candidates.push('CIS');
 
@@ -192,26 +189,22 @@
 
       document.getElementById('solution').innerHTML =
         header + 'Several solutions are suitable here (' + candidates.map(function (c) { return LABELS[c]; }).join(', ') + ').' +
-        ' Use the sliders below to rank them by what matters most to you.';
+        ' Pick what matters most to you below.';
       currentCandidates = candidates;
       prioritiesBox.style.display = 'block';
-      updateRanking();
+      document.getElementById('ranking').innerHTML = '';
+      document.querySelectorAll('#priorities button').forEach(function (b) { b.classList.remove('active'); });
     }
 
-    function updateRanking() {
+    function updateRanking(criterion) {
       if (!currentCandidates.length) return;
 
-      var costWeight = parseInt(document.getElementById('costSlider').value, 10);
-      var retWeight = parseInt(document.getElementById('retSlider').value, 10);
-      var maintWeight = parseInt(document.getElementById('maintSlider').value, 10);
-      document.getElementById('costVal').innerText = costWeight;
-      document.getElementById('retVal').innerText = retWeight;
-      document.getElementById('maintVal').innerText = maintWeight;
+      document.querySelectorAll('#priorities button').forEach(function (b) {
+        b.classList.toggle('active', b.getAttribute('data-criterion') === criterion);
+      });
 
       var scored = currentCandidates.map(function (code) {
-        var c = CRITERIA[code];
-        var score = (costWeight * c.cost) + (retWeight * c.retention) + (maintWeight * c.maintenance);
-        return { code: code, label: LABELS[code], score: score };
+        return { code: code, label: LABELS[code], score: CRITERIA[code][criterion] };
       });
       scored.sort(function (a, b) { return b.score - a.score; });
 
@@ -221,15 +214,10 @@
       document.getElementById('ranking').innerHTML = html;
     }
 
-    document.getElementById('costSlider').addEventListener('input', updateRanking);
-    document.getElementById('retSlider').addEventListener('input', updateRanking);
-    document.getElementById('maintSlider').addEventListener('input', updateRanking);
+    document.querySelectorAll('#priorities button').forEach(function (b) {
+      b.addEventListener('click', function () { updateRanking(b.getAttribute('data-criterion')); });
+    });
   </script>
-
-</body>
-</html>
-
-
 
 </body>
 </html>
