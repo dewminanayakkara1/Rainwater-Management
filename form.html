@@ -1,0 +1,100 @@
+<nav>
+  <a href="index.html">Home</a> |
+  <a href="about.html">About</a> |
+  <a href="solutions.html">Solutions</a> |
+  <a href="imperviousness.html">Imperviousness Map</a> |
+  <a href="form.html">Rainwater App</a>
+</nav>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rainwater App</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #map { width: 100%; height: 500px; margin: 10px 0; }
+    #solution { margin: 10px 0; font-size: 1.1em; padding: 10px; background: #f4f4f4; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Rainwater App</h1>
+  <p>Click on your house on the map. The recommended Nature-Based Solution shown is the one already calculated by our GIS analysis for that exact parcel.</p>
+
+  <div id="map"></div>
+  <div id="solution">Click a house on the map to see its recommended solution.</div>
+
+  <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+  <!-- Replace YOUR_API_KEY with your real Google Maps API key -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBZYEbAcNzah4uJIzYvquSGWWklBqVYZjY&callback=initMap" async defer></script>
+  <script>
+    var map, geojsonData;
+    var houseOutline = null; // highlights the clicked house so you can confirm the right one was picked
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 50.92, lng: 6.7 },
+        zoom: 17
+      });
+
+      fetch('https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/imp%20new.json')
+        .then(function (res) { return res.json(); })
+        .then(function (data) { geojsonData = data; });
+
+      map.addListener('click', function (event) {
+        var lat = event.latLng.lat();
+        var lng = event.latLng.lng();
+        showSolutionAt(lat, lng);
+      });
+    }
+
+    function labelFor(sol) {
+      if (sol && sol.indexOf('Infilt') === 0) return 'Infiltration (rain garden, soakaway)';
+      if (sol === 'Mixed') return 'Mixed: storage tank + infiltration / permeable paving';
+      if (sol === 'Engineered') return 'Engineered: storage tank, green roof, permeable paving';
+      return sol || null;
+    }
+
+    function showSolutionAt(lat, lng) {
+      if (!geojsonData) {
+        document.getElementById('solution').innerText = 'Map data still loading, please click again in a moment.';
+        return;
+      }
+
+      var pt = turf.point([lng, lat]);
+      var match = geojsonData.features.find(function (f) {
+        return turf.booleanPointInPolygon(pt, f);
+      });
+
+      if (houseOutline) {
+        houseOutline.setMap(null);
+        houseOutline = null;
+      }
+
+      if (!match) {
+        document.getElementById('solution').innerText = 'No house data at this location — please click directly on a colored house/parcel.';
+        return;
+      }
+
+      var perc = match.properties['%'];
+      var sol = match.properties['Solution'];
+
+      document.getElementById('solution').innerHTML =
+        'Imperviousness: <b>' + perc + '%</b><br>' +
+        'Recommended Nature-Based Solution: <b>' + (labelFor(sol) || 'No data') + '</b>';
+
+      // Outline the matched house so it's clear which one was selected
+      var coords = match.geometry.coordinates[0].map(function (c) {
+        return { lat: c[1], lng: c[0] };
+      });
+      houseOutline = new google.maps.Polygon({
+        paths: coords,
+        strokeColor: '#000000',
+        strokeWeight: 3,
+        fillOpacity: 0,
+        map: map
+      });
+    }
+  </script>
+
+</body>
+</html>
