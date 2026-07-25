@@ -18,8 +18,7 @@
     #legend span { display: inline-block; width: 12px; height: 12px; margin-right: 4px; border-radius: 2px; vertical-align: middle; }
     #priorities { display: none; margin: 10px 0; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; }
     #priorities h3 { margin: 0 0 8px 0; font-size: 1em; }
-    #priorities button { padding: 8px 14px; margin: 0 6px 6px 0; border: 1px solid #999; border-radius: 6px; background: #f4f4f4; cursor: pointer; font-size: 0.9em; }
-    #priorities button.active { background: #333; color: #fff; border-color: #333; }
+    #priorities select { padding: 6px 10px; font-size: 0.95em; border: 1px solid #999; border-radius: 6px; background: #fff; }
     #ranking { margin-top: 10px; }
     #ranking div { padding: 4px 0; border-top: 1px solid #eee; }
     #ranking div:first-child { border-top: none; font-weight: bold; }
@@ -43,9 +42,12 @@
 
   <div id="priorities">
     <h3>More than one solution fits this plot — what matters most to you?</h3>
-    <button type="button" data-criterion="cost">Cost</button>
-    <button type="button" data-criterion="retention">Water Retention</button>
-    <button type="button" data-criterion="maintenance">Maintenance</button>
+    <select id="prioritySelect">
+      <option value="" disabled selected>Choose a priority...</option>
+      <option value="cost">Cost</option>
+      <option value="retention">Water Retention</option>
+      <option value="maintenance">Maintenance</option>
+    </select>
     <div id="ranking"></div>
   </div>
 
@@ -95,7 +97,7 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 50.912, lng: 6.7094 },
+        center: { lat: 50.912, lng: 6.7094 }, 
         zoom: 16
       });
 
@@ -193,15 +195,11 @@
       currentCandidates = candidates;
       prioritiesBox.style.display = 'block';
       document.getElementById('ranking').innerHTML = '';
-      document.querySelectorAll('#priorities button').forEach(function (b) { b.classList.remove('active'); });
+      document.getElementById('prioritySelect').value = '';
     }
 
     function updateRanking(criterion) {
-      if (!currentCandidates.length) return;
-
-      document.querySelectorAll('#priorities button').forEach(function (b) {
-        b.classList.toggle('active', b.getAttribute('data-criterion') === criterion);
-      });
+      if (!currentCandidates.length || !criterion) return;
 
       var scored = currentCandidates.map(function (code) {
         return { code: code, label: LABELS[code], score: CRITERIA[code][criterion] };
@@ -214,8 +212,8 @@
       document.getElementById('ranking').innerHTML = html;
     }
 
-    document.querySelectorAll('#priorities button').forEach(function (b) {
-      b.addEventListener('click', function () { updateRanking(b.getAttribute('data-criterion')); });
+    document.getElementById('prioritySelect').addEventListener('change', function () {
+      updateRanking(this.value);
     });
   </script>
 
