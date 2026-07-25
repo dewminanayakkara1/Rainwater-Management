@@ -16,6 +16,13 @@
     #solution { margin: 10px 0; font-size: 1.1em; padding: 10px; background: #f4f4f4; border-radius: 6px; }
     #legend { font-size: 0.9em; margin: 6px 0 10px 0; }
     #legend span { display: inline-block; width: 12px; height: 12px; margin-right: 4px; border-radius: 2px; vertical-align: middle; }
+    #priorities { display: none; margin: 10px 0; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; }
+    #priorities h3 { margin: 0 0 8px 0; font-size: 1em; }
+    #priorities label { display: block; margin: 8px 0 2px 0; font-size: 0.9em; }
+    #priorities input[type=range] { width: 100%; }
+    #ranking { margin-top: 10px; }
+    #ranking div { padding: 4px 0; border-top: 1px solid #eee; }
+    #ranking div:first-child { border-top: none; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -25,16 +32,26 @@
   <div id="legend">
     <span style="background:#2ecc71"></span>Green Roof &nbsp;
     <span style="background:#f39c12"></span>Permeable Pavement &nbsp;
-    <span style="background:#3498db"></span>Storage Tank &nbsp;
+    <span style="background:#3498db"></span>Bioswale &nbsp;
     <span style="background:#9b59b6"></span>Rain Garden &nbsp;
-    <span style="background:#e74c3c"></span>Infiltration &amp; Reuse &nbsp;
+    <span style="background:#e74c3c"></span>Rainwater Cistern &nbsp;
     <span style="background:#cccccc"></span>No data
   </div>
 
   <div id="map"></div>
   <div id="solution">Loading GIS data, please wait...</div>
 
-  <!-- Replace YOUR_API_KEY with your real Google Maps API key -->
+  <div id="priorities">
+    <h3>More than one solution fits this plot — set your priorities</h3>
+    <label>Low cost matters: <span id="costVal">3</span>/5</label>
+    <input type="range" id="costSlider" min="1" max="5" value="3">
+    <label>Water retention matters: <span id="retVal">3</span>/5</label>
+    <input type="range" id="retSlider" min="1" max="5" value="3">
+    <label>Low maintenance matters: <span id="maintVal">3</span>/5</label>
+    <input type="range" id="maintSlider" min="1" max="5" value="3">
+    <div id="ranking"></div>
+  </div>
+
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
   <script>
     var map;
@@ -43,13 +60,20 @@
     var LABELS = {
       GR: 'Green Roof',
       PP: 'Permeable Pavement',
-      BS: 'Rainwater Storage Tank',
+      BS: 'Bioswale',
       RG: 'Rain Garden',
-      CIS: 'Infiltration & Reuse System (combined)'
+      CIS: 'Rainwater Cistern'
     };
     var COLORS = { GR: '#2ecc71', PP: '#f39c12', BS: '#3498db', RG: '#9b59b6', CIS: '#e74c3c', NONE: '#cccccc' };
 
-    // Base URL where all the GeoJSON files live in your GitHub repo (root folder)
+    var CRITERIA = {
+      RG:  { cost: 5, retention: 5, maintenance: 5 }, // Rain Garden
+      BS:  { cost: 2, retention: 4, maintenance: 2 }, // Bioswale
+      GR:  { cost: 1, retention: 3, maintenance: 1 }, // Green Roof
+      PP:  { cost: 3, retention: 2, maintenance: 3 }, // Permeable Pavement
+      CIS: { cost: 4, retention: 1, maintenance: 4 }  // Rainwater Cistern
+    };
+
     var BASE = 'https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/';
 
     function fetchJSON(filename) {
@@ -74,17 +98,17 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 50.912, lng: 6.7094 }, // centered on the Horrem plot data
+        center: { lat: 50.912, lng: 6.7094 },
         zoom: 16
       });
 
       Promise.all([
         fetchJSON('Horrem plots.geojson'),
-        fetchJSON('GR suitability.geojson'),
-        fetchJSON('PP suitability.geojson'),
-        fetchJSON('BS suitability.geojson'),
-        fetchJSON('RG suitability.geojson'),
-        fetchJSON('CIS suitability.geojson')
+        fetchJSON('Green Roof Suitability.geojson'),
+        fetchJSON('Permeable Pavement Suitability.geojson'),
+        fetchJSON('Bioswale Suitability.geojson'),
+        fetchJSON('Rain Garden Suitability.geojson'),
+        fetchJSON('Rainwater Cistern Suitability.geojson')
       ]).then(function (results) {
         var plots = results[0];
         var gr = results[1].features;
@@ -103,7 +127,6 @@
           if (id) cisSuitablePlots[id] = true;
         });
 
-        // Work out the recommendation for every plot up front, once, and store it on the feature
         plots.features.forEach(function (f) {
           var id = f.properties['flstkennz_'];
           var areas = {
@@ -113,30 +136,23 @@
             RG: rgAreaByPlot[id] || 0
           };
           var cisSuitable = !!cisSuitablePlots[id];
+          
+          var candidates = Object.keys(areas).filter(function (code) { return areas[code] > 0; });
+          if (cisSuitable) candidates.push('CIS');
 
           var bestCode = null, bestArea = 0;
           Object.keys(areas).forEach(function (code) {
             if (areas[code] > bestArea) { bestArea = areas[code]; bestCode = code; }
           });
+          var previewCode = candidates.length === 1 ? candidates[0] : (bestCode || (cisSuitable ? 'CIS' : null));
 
-          var recommendedCode = bestCode || (cisSuitable ? 'CIS' : null);
-
-          var others = [];
-          Object.keys(areas).forEach(function (code) {
-            if (areas[code] > 0 && code !== bestCode) others.push(LABELS[code]);
-          });
-          if (cisSuitable && recommendedCode !== 'CIS') others.push(LABELS.CIS);
-
-          f.properties.recommended_code = recommendedCode;
-          f.properties.recommended_label = recommendedCode ? LABELS[recommendedCode] : null;
-          f.properties.other_labels = others;
+          f.properties.candidate_codes = candidates;
+          f.properties.preview_code = previewCode;
         });
 
-        // Draw every plot on the map, colored by its recommended solution
         map.data.addGeoJson(plots);
         map.data.setStyle(function (feature) {
-          var code = feature.getProperty('recommended_code');
-          var color = COLORS[code] || COLORS.NONE;
+          var color = COLORS[feature.getProperty('preview_code')] || COLORS.NONE;
           return { fillColor: color, fillOpacity: 0.45, strokeColor: color, strokeWeight: 1 };
         });
 
@@ -150,29 +166,69 @@
       });
     }
 
+    var currentCandidates = [];
+
     function showPlot(feature, latLng) {
       if (marker) marker.setMap(null);
       marker = new google.maps.Marker({ position: latLng, map: map });
 
       var address = feature.getProperty('lagebeztxt');
-      var recommended = feature.getProperty('recommended_label');
-      var others = feature.getProperty('other_labels') || [];
+      var candidates = feature.getProperty('candidate_codes') || [];
       var header = address ? '<b>' + address + '</b><br>' : '';
+      var prioritiesBox = document.getElementById('priorities');
 
-      if (!recommended) {
+      if (candidates.length === 0) {
+        prioritiesBox.style.display = 'none';
         document.getElementById('solution').innerHTML = header + 'No suitable Nature-Based Solution identified yet for this plot.';
         return;
       }
 
+      if (candidates.length === 1) {
+        prioritiesBox.style.display = 'none';
+        document.getElementById('solution').innerHTML =
+          header + 'Recommended Nature-Based Solution: <b>' + LABELS[candidates[0]] + '</b>';
+        return;
+      }
+
       document.getElementById('solution').innerHTML =
-        header +
-        'Recommended Nature-Based Solution: <b>' + recommended + '</b>' +
-        (others.length ? '<br>Also suitable: ' + others.join(', ') : '');
+        header + 'Several solutions are suitable here (' + candidates.map(function (c) { return LABELS[c]; }).join(', ') + ').' +
+        ' Use the sliders below to rank them by what matters most to you.';
+      currentCandidates = candidates;
+      prioritiesBox.style.display = 'block';
+      updateRanking();
     }
+
+    function updateRanking() {
+      if (!currentCandidates.length) return;
+
+      var costWeight = parseInt(document.getElementById('costSlider').value, 10);
+      var retWeight = parseInt(document.getElementById('retSlider').value, 10);
+      var maintWeight = parseInt(document.getElementById('maintSlider').value, 10);
+      document.getElementById('costVal').innerText = costWeight;
+      document.getElementById('retVal').innerText = retWeight;
+      document.getElementById('maintVal').innerText = maintWeight;
+
+      var scored = currentCandidates.map(function (code) {
+        var c = CRITERIA[code];
+        var score = (costWeight * c.cost) + (retWeight * c.retention) + (maintWeight * c.maintenance);
+        return { code: code, label: LABELS[code], score: score };
+      });
+      scored.sort(function (a, b) { return b.score - a.score; });
+
+      var html = scored.map(function (s, i) {
+        return '<div>' + (i === 0 ? '&#9733; Best match: ' : (i + 1) + '. ') + s.label + '</div>';
+      }).join('');
+      document.getElementById('ranking').innerHTML = html;
+    }
+
+    document.getElementById('costSlider').addEventListener('input', updateRanking);
+    document.getElementById('retSlider').addEventListener('input', updateRanking);
+    document.getElementById('maintSlider').addEventListener('input', updateRanking);
   </script>
 
 </body>
 </html>
+
 
 
 </body>
