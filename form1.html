@@ -6,104 +6,94 @@
   <a href="form.html">Rainwater App</a>
 </nav>
 
-
 <!DOCTYPE html>
 <html>
 <head>
-  <title>User Data Collection</title>
+  <title>Rainwater App</title>
   <style>
-    #map { width: 100%; height: 350px; margin: 10px 0; }
     body { font-family: Arial, sans-serif; }
+    #map { width: 100%; height: 500px; margin: 10px 0; }
+    #solution { margin: 10px 0; font-size: 1.1em; padding: 10px; background: #f4f4f4; border-radius: 6px; }
   </style>
 </head>
 <body>
-  <h1>User Data Collection</h1>
-  <p>Rain Water Management App.</p>
+  <h1>Rainwater App</h1>
+  <p>Click on your house on the map. The recommended Nature-Based Solution shown is the one already calculated by our GIS analysis for that exact parcel.</p>
 
-  <form id="myForm">
-    <label>Your name: <input type="text" name="username"></label><br>
-    <label>Email: <input type="email" name="email"></label><br>
-    <label>House type:
-      <select name="houseType">
-        <option value="detached">Detached</option>
-        <option value="semi-detached">Semi-detached</option>
-        <option value="apartment">Apartment</option>
-      </select>
-    </label><br>
-    <label>Has a garden:
-      <input type="radio" name="garden" value="yes"> Yes
-      <input type="radio" name="garden" value="no"> No
-    </label><br>
-    <label>Garden area (m²):
-      <input type="number" name="gardenArea" min="0">
-    </label><br>
-    <input type="hidden" name="lat" id="lat">
-    <input type="hidden" name="lng" id="lng">
-    <div class="instruction">Please click your location on the map.</div>
-    <div id="map"></div>
-    <input type="submit" value="Submit">
-  </form>
-
-  <div id="solution" style="margin-top:15px;font-size:1.1em;"></div>
+  <div id="map"></div>
+  <div id="solution">Click a house on the map to see its recommended solution.</div>
 
   <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
-  <!-- Replace YOUR_API_KEY with your real Google Maps API key -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
   <script>
-    let marker, map, geojsonData;
+    var map, geojsonData;
+    var houseOutline = null; // highlights the clicked house so you can confirm the right one was picked
+
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 50.92, lng: 6.7},
-        zoom: 14
+        center: { lat: 50.92, lng: 6.7 },
+        zoom: 17
       });
-      fetch('https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/imp%20new.json')
-        .then(res => res.json())
-        .then(data => {
-          geojsonData = data;
-        });
 
-      map.addListener('click', function(event) {
+      fetch('https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/imp%20new.json')
+        .then(function (res) { return res.json(); })
+        .then(function (data) { geojsonData = data; });
+
+      map.addListener('click', function (event) {
         var lat = event.latLng.lat();
         var lng = event.latLng.lng();
-        document.getElementById('lat').value = lat;
-        document.getElementById('lng').value = lng;
-        if (marker) marker.setMap(null);
-        marker = new google.maps.Marker({ position: {lat, lng}, map: map });
+        showSolutionAt(lat, lng);
       });
     }
 
-    document.getElementById('myForm').onsubmit = function(e) {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const lat = formData.get('lat');
-      const lng = formData.get('lng');
-      if (!lat || !lng) {
-        document.getElementById('solution').innerText = 'Please click your location on the map!';
-        return;
-      }
+    function labelFor(sol) {
+      if (sol && sol.indexOf('Infilt') === 0) return 'Infiltration (rain garden, soakaway)';
+      if (sol === 'Mixed') return 'Mixed: storage tank + infiltration / permeable paving';
+      if (sol === 'Engineered') return 'Engineered: storage tank, green roof, permeable paving';
+      return sol || null;
+    }
+
+    function showSolutionAt(lat, lng) {
       if (!geojsonData) {
-        document.getElementById('solution').innerText = 'Map data not loaded yet.';
+        document.getElementById('solution').innerText = 'Map data still loading, please click again in a moment.';
         return;
       }
-      let pt = turf.point([parseFloat(lng), parseFloat(lat)]);
-      let match = geojsonData.features.find(f => turf.booleanPointInPolygon(pt, f));
-      let impMessage = '';
-      if (match) {
-        let imp = match.properties['%'];
-        let rec = imp <= 30 ? 'Infiltration (rain gardens, soakaways)' :
-                  imp <= 70 ? 'Mixed: tanks + infiltration/permeable paving' :
-                  'Engineered: tanks, green roofs, permeable paving';
-        impMessage = `Imperviousness: <b>${imp}%</b><br>Recommended Solution: <b>${rec}</b>`;
-      } else {
-        impMessage = 'No imperviousness data here.';
+
+      var pt = turf.point([lng, lat]);
+      var match = geojsonData.features.find(function (f) {
+        return turf.booleanPointInPolygon(pt, f);
+      });
+
+      if (houseOutline) {
+        houseOutline.setMap(null);
+        houseOutline = null;
       }
-      document.getElementById('solution').innerHTML = impMessage;
-    };
+
+      if (!match) {
+        document.getElementById('solution').innerText = 'No house data at this location — please click directly on a colored house/parcel.';
+        return;
+      }
+
+      var perc = match.properties['%'];
+      var sol = match.properties['Solution'];
+
+      document.getElementById('solution').innerHTML =
+        'Imperviousness: <b>' + perc + '%</b><br>' +
+        'Recommended Nature-Based Solution: <b>' + (labelFor(sol) || 'No data') + '</b>';
+
+      // Outline the matched house so it's clear which one was selected
+      var coords = match.geometry.coordinates[0].map(function (c) {
+        return { lat: c[1], lng: c[0] };
+      });
+      houseOutline = new google.maps.Polygon({
+        paths: coords,
+        strokeColor: '#000000',
+        strokeWeight: 3,
+        fillOpacity: 0,
+        map: map
+      });
+    }
   </script>
 
 </body>
 </html>
-
-
-
-
