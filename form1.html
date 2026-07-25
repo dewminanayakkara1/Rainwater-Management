@@ -81,7 +81,6 @@
         'Imperviousness: <b>' + perc + '%</b><br>' +
         'Recommended Nature-Based Solution: <b>' + (labelFor(sol) || 'No data') + '</b>';
 
-      // Outline the matched house so it's clear which one was selected
       var coords = match.geometry.coordinates[0].map(function (c) {
         return { lat: c[1], lng: c[0] };
       });
