@@ -70,14 +70,20 @@
       });
     }
 
-    function sumByPlot(features, field, filterFn) {
+    function sumByPlot(features, fieldOrFields, filterFn) {
+      var fields = Array.isArray(fieldOrFields) ? fieldOrFields : [fieldOrFields];
       var out = {};
       features.forEach(function (f) {
         var p = f.properties;
         if (filterFn && !filterFn(p)) return;
         var id = p['flstkennz_'];
-        var val = parseFloat(p[field]);
-        if (!id || isNaN(val)) return;
+        if (!id) return;
+        var val = NaN;
+        for (var i = 0; i < fields.length; i++) {
+          val = parseFloat(p[fields[i]]);
+          if (!isNaN(val)) break;
+        }
+        if (isNaN(val)) return;
         out[id] = (out[id] || 0) + val;
       });
       return out;
@@ -104,10 +110,10 @@
         var rg = results[4].features;
         var cis = results[5].features;
 
-        var grAreaByPlot = sumByPlot(gr, 'modarea', function (p) { return p['feasible'] === 1; });
-        var itAreaByPlot = sumByPlot(it, 'A new');
-        var bsAreaByPlot = sumByPlot(bs, 's area');
-        var rgAreaByPlot = sumByPlot(rg, 'area final');
+        var grAreaByPlot = sumByPlot(gr, ['modarea'], function (p) { return p['feasible'] === 1; });
+        var itAreaByPlot = sumByPlot(it, ['A new', 'ITarea', 'IT area']);
+        var bsAreaByPlot = sumByPlot(bs, ['S A', 's area', 'final area']);
+        var rgAreaByPlot = sumByPlot(rg, ['area final', 'rg area']);
         var cisSuitablePlots = {};
         cis.forEach(function (f) {
           var id = f.properties['flstkennz_'];
@@ -189,15 +195,4 @@
       scored.sort(function (a, b) { return b.score - a.score; });
 
       var html = scored.map(function (s, i) {
-        return '<div>' + (i === 0 ? '&#9733; Best match: ' : (i + 1) + '. ') + s.label + '</div>';
-      }).join('');
-      document.getElementById('ranking').innerHTML = html;
-    }
-
-    document.getElementById('prioritySelect').addEventListener('change', function () {
-      updateRanking(this.value);
-    });
-  </script>
-
-</body>
-</html>
+        return '<div>' + (i === 0 ? '&#9733; Best ma
