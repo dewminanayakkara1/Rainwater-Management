@@ -14,8 +14,6 @@
     body { font-family: Arial, sans-serif; }
     #map { width: 100%; height: 500px; margin: 10px 0; }
     #solution { margin: 10px 0; font-size: 1.1em; padding: 10px; background: #f4f4f4; border-radius: 6px; }
-    #legend { font-size: 0.9em; margin: 6px 0 10px 0; }
-    #legend span { display: inline-block; width: 12px; height: 12px; margin-right: 4px; border-radius: 2px; vertical-align: middle; }
     #priorities { display: none; margin: 10px 0; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; }
     #priorities h3 { margin: 0 0 8px 0; font-size: 1em; }
     #priorities select { padding: 6px 10px; font-size: 0.95em; border: 1px solid #999; border-radius: 6px; background: #fff; }
@@ -26,16 +24,7 @@
 </head>
 <body>
   <h1>Rainwater App</h1>
-  <p>Click on a highlighted plot to see its recommended Nature-Based Solution, calculated from our GIS suitability layers.</p>
-
-  <div id="legend">
-    <span style="background:#2ecc71"></span>Green Roof &nbsp;
-    <span style="background:#f39c12"></span>Permeable Pavement &nbsp;
-    <span style="background:#3498db"></span>Bioswale &nbsp;
-    <span style="background:#9b59b6"></span>Rain Garden &nbsp;
-    <span style="background:#e74c3c"></span>Rainwater Cistern &nbsp;
-    <span style="background:#cccccc"></span>No data
-  </div>
+  <p>Click on a plot to see its recommended Nature-Based Solution, calculated from our GIS suitability layers.</p>
 
   <div id="map"></div>
   <div id="solution">Loading GIS data, please wait...</div>
@@ -63,7 +52,6 @@
       RG: 'Rain Garden',
       CIS: 'Rainwater Cistern'
     };
-    var COLORS = { GR: '#2ecc71', PP: '#f39c12', BS: '#3498db', RG: '#9b59b6', CIS: '#e74c3c', NONE: '#cccccc' };
 
     var CRITERIA = {
       RG:  { cost: 5, retention: 5, maintenance: 5 }, // Rain Garden
@@ -97,7 +85,7 @@
 
     function initMap() {
       map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 50.912, lng: 6.7094 }, 
+        center: { lat: 50.912, lng: 6.7094 },
         zoom: 16
       });
 
@@ -139,20 +127,14 @@
           var candidates = Object.keys(areas).filter(function (code) { return areas[code] > 0; });
           if (cisSuitable) candidates.push('CIS');
 
-          var bestCode = null, bestArea = 0;
-          Object.keys(areas).forEach(function (code) {
-            if (areas[code] > bestArea) { bestArea = areas[code]; bestCode = code; }
-          });
-          var previewCode = candidates.length === 1 ? candidates[0] : (bestCode || (cisSuitable ? 'CIS' : null));
-
           f.properties.candidate_codes = candidates;
-          f.properties.preview_code = previewCode;
         });
 
         map.data.addGeoJson(plots);
-        map.data.setStyle(function (feature) {
-          var color = COLORS[feature.getProperty('preview_code')] || COLORS.NONE;
-          return { fillColor: color, fillOpacity: 0.45, strokeColor: color, strokeWeight: 1 };
+        map.data.setStyle({
+          fillOpacity: 0,
+          strokeColor: '#555555',
+          strokeWeight: 1
         });
 
         map.data.addListener('click', function (event) {
