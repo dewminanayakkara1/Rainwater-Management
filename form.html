@@ -54,11 +54,11 @@
     };
 
     var CRITERIA = {
-      RG:  { cost: 5, retention: 5, maintenance: 5 }, // Rain Garden
-      BS:  { cost: 2, retention: 4, maintenance: 2 }, // Bioswale
-      GR:  { cost: 1, retention: 3, maintenance: 1 }, // Green Roof
-      IT:  { cost: 3, retention: 2, maintenance: 3 }, // Infiltration trench
-      CIS: { cost: 4, retention: 1, maintenance: 4 }  // Rainwater Cistern
+      RG:  { cost: 5, retention: 5, maintenance: 5 },
+      BS:  { cost: 2, retention: 4, maintenance: 2 },
+      GR:  { cost: 1, retention: 3, maintenance: 1 },
+      IT:  { cost: 3, retention: 2, maintenance: 3 },
+      CIS: { cost: 4, retention: 1, maintenance: 4 }
     };
 
     var BASE = 'https://raw.githubusercontent.com/dewminanayakkara1/Rainwater-Management/refs/heads/main/';
@@ -105,8 +105,8 @@
         var cis = results[5].features;
 
         var grAreaByPlot = sumByPlot(gr, 'modarea', function (p) { return p['feasible'] === 1; });
-        var itAreaByPlot = sumByPlot(it, 'final area');
-        var bsAreaByPlot = sumByPlot(bs, 'final area');
+        var itAreaByPlot = sumByPlot(it, 'A new');
+        var bsAreaByPlot = sumByPlot(bs, 's area');
         var rgAreaByPlot = sumByPlot(rg, 'area final');
         var cisSuitablePlots = {};
         cis.forEach(function (f) {
