@@ -47,7 +47,7 @@
 
     var LABELS = {
       GR: 'Green Roof',
-      PP: 'Permeable Pavement',
+      IT: 'Infiltration Trench',
       BS: 'Bioswale',
       RG: 'Rain Garden',
       CIS: 'Rainwater Cistern'
@@ -57,7 +57,7 @@
       RG:  { cost: 5, retention: 5, maintenance: 5 }, // Rain Garden
       BS:  { cost: 2, retention: 4, maintenance: 2 }, // Bioswale
       GR:  { cost: 1, retention: 3, maintenance: 1 }, // Green Roof
-      PP:  { cost: 3, retention: 2, maintenance: 3 }, // Permeable Pavement
+      IT:  { cost: 3, retention: 2, maintenance: 3 }, // Infiltration trench
       CIS: { cost: 4, retention: 1, maintenance: 4 }  // Rainwater Cistern
     };
 
@@ -92,20 +92,20 @@
       Promise.all([
         fetchJSON('Horrem plots.geojson'),
         fetchJSON('Green Roof Suitability.geojson'),
-        fetchJSON('Permeable Pavement Suitability.geojson'),
+        fetchJSON('Infiltration Trench suitability.geojson'),
         fetchJSON('Bioswale Suitability.geojson'),
         fetchJSON('Rain Garden Suitability.geojson'),
         fetchJSON('Rainwater Cistern Suitability.geojson')
       ]).then(function (results) {
         var plots = results[0];
         var gr = results[1].features;
-        var pp = results[2].features;
+        var it = results[2].features;
         var bs = results[3].features;
         var rg = results[4].features;
         var cis = results[5].features;
 
         var grAreaByPlot = sumByPlot(gr, 'modarea', function (p) { return p['feasible'] === 1; });
-        var ppAreaByPlot = sumByPlot(pp, 'final area');
+        var itAreaByPlot = sumByPlot(it, 'final area');
         var bsAreaByPlot = sumByPlot(bs, 'final area');
         var rgAreaByPlot = sumByPlot(rg, 'area final');
         var cisSuitablePlots = {};
@@ -118,7 +118,7 @@
           var id = f.properties['flstkennz_'];
           var areas = {
             GR: grAreaByPlot[id] || 0,
-            PP: ppAreaByPlot[id] || 0,
+            IT: itAreaByPlot[id] || 0,
             BS: bsAreaByPlot[id] || 0,
             RG: rgAreaByPlot[id] || 0
           };
