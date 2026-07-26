@@ -40,7 +40,6 @@
     <div id="ranking"></div>
   </div>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
   <script>
     var map;
     var marker = null;
@@ -195,4 +194,17 @@
       scored.sort(function (a, b) { return b.score - a.score; });
 
       var html = scored.map(function (s, i) {
-        return '<div>' + (i === 0 ? '&#9733; Best ma
+        return '<div>' + (i === 0 ? '&#9733; Best match: ' : (i + 1) + '. ') + s.label + '</div>';
+      }).join('');
+      document.getElementById('ranking').innerHTML = html;
+    }
+
+    document.getElementById('prioritySelect').addEventListener('change', function () {
+      updateRanking(this.value);
+    });
+  </script>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuF4yjKZWnaZ2aRxwLBKf4V6VXlbjI2Ag&callback=initMap" async defer></script>
+
+</body>
+</html>
