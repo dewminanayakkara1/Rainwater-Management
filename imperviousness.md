@@ -103,12 +103,12 @@ Browse through the maps using the arrows or thumbnails below, and use the zoom b
   });
 
   document.getElementById('zoomInBtn').addEventListener('click', function () {
-    zoom = Math.min(zoom + 0.5, 4);
+    zoom = Math.min(zoom + 1, 10);
     applyTransform();
   });
 
   document.getElementById('zoomOutBtn').addEventListener('click', function () {
-    zoom = Math.max(zoom - 0.5, 1);
+    zoom = Math.max(zoom - 1, 1);
     if (zoom === 1) { panX = 0; panY = 0; }
     applyTransform();
   });
@@ -143,9 +143,9 @@ Browse through the maps using the arrows or thumbnails below, and use the zoom b
   viewport.addEventListener('wheel', function (e) {
     e.preventDefault();
     if (e.deltaY < 0) {
-      zoom = Math.min(zoom + 0.25, 4);
+      zoom = Math.min(zoom + 0.5, 10);
     } else {
-      zoom = Math.max(zoom - 0.25, 1);
+      zoom = Math.max(zoom - 0.5, 1);
       if (zoom === 1) { panX = 0; panY = 0; }
     }
     applyTransform();
