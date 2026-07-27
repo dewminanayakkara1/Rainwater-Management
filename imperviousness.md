@@ -49,11 +49,11 @@ Browse through the maps using the arrows or thumbnails below, and use the zoom b
 
 <script>
   var IMAGES = [
-    { src: 'impervious-map-1.png', caption: 'Imperviousness' },
-    { src: 'impervious-map-2.png', caption: 'Heavy Rain Hazard' },
-    { src: 'impervious-map-3.png', caption: 'Soil Type' },
-    { src: 'impervious-map-4.png', caption: 'Groundwater Level' },
-    { src: 'impervious-map-5.png', caption: 'Flood-Prone Zones' }
+    { src: 'Heavy rain hazard-rare.png', caption: 'Heavy rain hazard-rare' },
+    { src: 'Imperviousness.png', caption: 'Imperviousness' },
+    { src: 'Elevation.png', caption: 'Elevation' },
+    { src: 'Soil infiltartion capacity.png', caption: 'Soil infiltartion capacity' },
+    { src: 'slope.png', caption: 'slope' }
   ];
 
   var current = 0;
