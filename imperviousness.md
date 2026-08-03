@@ -6,15 +6,15 @@ nav_order: 4
 
 ## Imperviousness Map
 
-This map visualizes impermeable surfaces across Kerpen, helping residents understand how land cover influences stormwater flow.
+These maps show heavy rain hazard, imperviousness, elevation, soil infiltration capacity, and slope across the Horrem study area, giving a general picture of local site conditions relevant to rainwater management.
 
 Use the maps below to:
-- Identify high-runoff areas around your property
-- Assess where infiltration measures could be most effective
-- Explore opportunities for replacing hard surfaces with permeable or green alternatives
 
-Browse through the maps using the arrows or thumbnails below, and use the zoom buttons to look more closely at any area.
+- Get a rough sense of ground conditions in your part of the study area
+- See where soil and slope are more or less favourable for infiltration based measures
+- Understand which factors limit or support different rainwater management options nearby
 
+These are static reference maps, not a parcel specific suitability tool. Use the zoom buttons to look more closely at any area.
 <style>
   #gallery { max-width: 800px; margin: 0 auto; }
   #galleryViewport { position: relative; width: 100%; height: 500px; overflow: hidden; border: 1px solid #ddd; border-radius: 6px; background: #f4f4f4; display: flex; align-items: center; justify-content: center; }
@@ -53,7 +53,7 @@ Browse through the maps using the arrows or thumbnails below, and use the zoom b
     { src: 'Imperviousness.png', caption: 'Imperviousness' },
     { src: 'Elevation.png', caption: 'Elevation' },
     { src: 'Soil infiltartion capacity.png', caption: 'Soil infiltartion capacity' },
-    { src: 'slope.png', caption: 'slope' }
+    { src: 'slope.png', caption: 'Slope' }
   ];
 
   var current = 0;
