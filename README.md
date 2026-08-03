@@ -1,20 +1,21 @@
 # Rainwater Management Web App
 
-This repository contains the source files for the Kerpen Rainwater Management Web App, a tool designed to help homeowners explore sustainable rainwater and stormwater management measures tailored to Kerpen's local climate and urban conditions.
+This repository contains the source files for the Kerpen Rainwater Management Web App, a decision support tool developed as part of an MSc thesis at TH Köln to help private landowners in Horrem, Kerpen identify feasible, site-specific nature based solutions (NbS) for rainwater management on their own parcel.
 
 ## Purpose
-The web app supports residents in:
-- Understanding local climate risks (extreme rainfall, drought, rising groundwater)
-- Exploring green, engineered, and hybrid rainwater management solutions
-- Viewing imperviousness and related spatial data through interactive maps
-- Providing property-specific inputs to receive tailored recommendations
+The web app supports the practical output of a GIS-MCDA decision support methodology, translating parcel-level suitability analysis and multi-criteria prioritisation into a format usable by non-expert homeowners. It helps residents:
+
+- Identify which of five NbS typologies (green roof, rain garden, infiltration trench, rainwater cistern, bioswale) are technically feasible on their parcel, based on slope, soil infiltration capacity, groundwater depth, and site geometry
+- Compare feasible options ranked under three different priorities: retention, cost, and maintenance
+- View parcel-level flood exposure and site data underlying each recommendation
 
 ## Pages Included
-- **Home** – Introduction to Kerpen’s climate challenges and the purpose of the tool  
-- **About** – Background of the project and methodological basis  
-- **Solutions** – Sustainable rainwater management strategies  
-- **Interactive Map** – Visualization of impervious surfaces (more layers coming soon)  
-- **User Input** – Form to collect homeowner data for personalized guidance  
+- **Home** – Entry point and overview of the tool 
+- **About** – Project background and scope
+- **Methodology** – Summary of the GIS suitability screening and AHP-MCDA framework behind the recommendations
+- **Solutions** - Description of the five NbS typologies covered by the tool
+- **Site Condition Maps** – Static maps of soil infiltration capacity, slope, heavy rain hazard, elevation and imperviousness across the study area, for a general sense of local conditions
+- **User Input** – Form for selecting a parcel and priority to generate a personalised recommendation 
 
 ## Technology
 This site is built using:
@@ -26,7 +27,7 @@ This site is built using:
 Site link - https://dewminanayakkara1.github.io/Rainwater-Management/form.html
 
 ## Status
-This is an ongoing research and development project. Additional map layers, solution details, and user-driven improvements will be added over time.
+This is a research prototype developed for an MSc thesis and covers the Horrem study area only (494 residential parcels). It has not yet been tested with residents. Extending coverage to other Kerpen neighbourhoods, validating the prioritisation weights with real stakeholders, and adding further map layers are identified as next steps.
 
 ---
 
