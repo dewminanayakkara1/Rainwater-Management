@@ -6,35 +6,43 @@ nav_order: 3
 
 # Explore Rainwater Management Solutions
 
-Discover which options fit your home type, soil conditions, and Kerpen’s changing climate. This page provides practical guidance across three categories of sustainable measures:
+Discover which of five nature-based solutions could be feasible on your property, based on your building type, garden layout, and local soil and slope conditions. This page covers the typologies assessed in the underlying study.
 
-## Green Solutions
+## Building Based Solutions
 
-- **Rain Gardens**  
-  Shallow, planted depressions that capture and absorb rainwater, reducing surface runoff.
-  - *Best for gardens and yards with permeable soils.*
+- **Green Roof**  
+A vegetated roof layer that absorbs and slows rainfall before it reaches the ground.
+- Depends mainly on roof pitch and available roof area, not soil conditions.
+- Also helps cool your home in summer and can extend your roof's lifespan and increase the value of the plot.
+  - *Applicable area: building rooftops*
 
-- **Green Roofs**  
-  Roofs covered with plants help slow rainwater runoff and keep homes cool.
-  - *Useful for multi-family buildings, extensions and garages.*
+- **Rainwater Cistern**  
+  Stores roof runoff for garden use or non-potable household use, disconnecting your roof from the sewer.
+- Depends on having enough contributing roof area; suitable across most building types.
+- Lowers your water bill and can qualify for a stormwater fee reduction.
+  - *Applicable area: connected to roof downpipes, placed adjacent to the building*
 
-## Engineered Solutions
+## Ground Based Solutions
 
-- **Rainwater Storage Tanks**  
- Collect rainwater for garden irrigation or household uses like toilet flushing.
-  - *Simple installation for single homes and row houses.*
+- **Rain Garden**  
+A shallow, planted depression that captures and infiltrates runoff from roofs and paved areas.
+- Needs a reasonably open, contiguous patch of garden with suitable soil and gentle slope.
+- Low cost to build and easy to maintain once planted.
+  - *Applicable area: private yards, near downspouts and setback areas*
 
-- **Permeable Pavements**  
- Special paving materials that allow water to infiltrate the ground.
-  - *Ideal for driveways, walkways, and patios to reduce runoff.*
+- **Infiltration Trench**  
+A gravel-filled trench that lets water soak into the ground along a narrow strip.
+- Fits narrow side or rear yard strips, often suited to terraced housing.
+- Works well where garden space is limited but a thin edge is available.
+  - *Applicable area: side yards, rear boundary strips, narrow unpaved gaps between structures*
 
-## Hybrid Solutions
+- **Bioswale**  
+ A vegetated channel with an engineered soil layer that conveys, filters, and partly infiltrates runoff.
+- Needs open space along a driveway, boundary, or slope with concentrated flow.
+- Good for managing runoff along a sloped or heavily paved part of your property.
+  - *Applicable area: beside driveways, along property edges, near parking areas, sloped sections*
 
-- **Infiltration & Reuse Systems**  
-  Combine storage tanks with underground infiltration units for maximum benefit.
-  - *Ideal for homes with both hard surfaces and open space.*
-
-Explore each solution in detail to find cost, installation steps, and maintenance tips tailored for Kerpen’s climate and soil.
+Each solution's feasibility on your specific parcel depends on site conditions such as soil infiltration capacity, slope, groundwater depth, and available space, not on preference alone.
 
 
 [Home](index.html) | [About](about.html) | [Solutions](solutions.html) | [Impervious Map](imperviousness.html) | [Rainwater App](form.html)
