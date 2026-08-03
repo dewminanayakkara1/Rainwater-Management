@@ -11,7 +11,7 @@ This web app is part of an MSc thesis project developing a parcel-level decision
 **Goal:**  
 To help homeowners in existing residential areas understand which rainwater management measures are actually feasible on their parcel, and which of those options best match their own priorities, whether that's reducing runoff, keeping costs down, or minimising upkeep. The tool is built entirely on publicly available spatial data (soil, terrain, building footprints, land use), so the same approach can be extended to other neighbourhoods and municipalities.
 
-
+----
 **Methodology:**
 The recommendations on this site come from a four-stage GIS-based analysis of Horrem's 494 residential parcels:
 
