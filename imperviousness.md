@@ -1,10 +1,10 @@
 ---
 layout: default
-title: Imperviousness Map
+title: Site Condition Maps
 nav_order: 4
 ---
 
-## Imperviousness Map
+## Site Condition Maps
 
 These maps show heavy rain hazard, imperviousness, elevation, soil infiltration capacity, and slope across the Horrem study area, giving a general picture of local site conditions relevant to rainwater management.
 
