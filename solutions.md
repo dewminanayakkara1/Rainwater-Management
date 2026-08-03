@@ -77,4 +77,4 @@ Discover which of five nature-based solutions could be feasible on your property
 <p class="solutions-footnote">Each solution's feasibility on your specific parcel depends on site conditions such as soil infiltration capacity, slope, groundwater depth, and available space, not on preference alone.</p>
 
 
-[Home](index.html) | [About](about.html) | [Solutions](solutions.html) | [Impervious Map](imperviousness.html) | [Rainwater App](form.html)
+[Home](index.html) | [About](about.html) | [Solutions](solutions.html) | [Site Condition Maps](imperviousness.html) | [Rainwater App](form.html)
