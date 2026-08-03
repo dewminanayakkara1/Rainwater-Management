@@ -12,7 +12,6 @@ The web app supports the practical output of a GIS-MCDA decision support methodo
 ## Pages Included
 - **Home** – Entry point and overview of the tool 
 - **About** – Project background and scope
-- **Methodology** – Summary of the GIS suitability screening and AHP-MCDA framework behind the recommendations
 - **Solutions** - Description of the five NbS typologies covered by the tool
 - **Site Condition Maps** – Static maps of soil infiltration capacity, slope, heavy rain hazard, elevation and imperviousness across the study area, for a general sense of local conditions
 - **User Input** – Form for selecting a parcel and priority to generate a personalised recommendation 
